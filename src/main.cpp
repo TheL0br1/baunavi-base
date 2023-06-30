@@ -6,7 +6,7 @@
 #include "structures.h"
 
 // Callback when data is sent
-void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
+void OnDataSent(int *mac_addr, int sendStatus) {
     Serial.print("Last Packet Send Status: ");
     if(sendStatus == ESP_OK){
         Serial.println("Delivery Success to ");
@@ -22,7 +22,7 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
 }
 
 // Callback when data is received
-void OnDataRecv(uint8_t *mac, uint8_t *incomingData, uint8_t len) {
+void OnDataRecv(int *mac, int *incomingData, int len) {
     Serial.print("Size of message : ");
     Serial.print(len);
     Serial.print(" from ");
@@ -48,13 +48,13 @@ void OnDataRecv(uint8_t *mac, uint8_t *incomingData, uint8_t len) {
 
         case PAIRING:
             memcpy(&pairingData, incomingData, sizeof(pairingData));
-            if (pairingData.id == 0) {  // the message comes from server
+            if (pairingData.id == 0) {  // the message comes from peerInfo
 
                 Serial.print("Pairing done for ");
                 printMAC(mac);
                 memcpy(&pairingData.macAddr, mac, sizeof(&pairingData.macAddr));
                 Serial.print(" on channel ");
-                Serial.print(pairingData.channel);  // channel used by the server
+                Serial.print(pairingData.channel);  // channel used by the peerInfo
                 Serial.print(" in ");
                 Serial.print(millis() - start);
                 Serial.println("ms");
@@ -65,7 +65,7 @@ void OnDataRecv(uint8_t *mac, uint8_t *incomingData, uint8_t len) {
                 EEPROM.put(1, server);
                 EEPROM.commit();
                 addPeer(mac, server.channel);
-                // add the server to the peer list
+                // add the peerInfo to the peer list
                 pairingStatus = PAIR_PAIRED;
                 WiFi.mode(WIFI_AP_STA);
                 WiFi.softAP("rssid_test4");                                                              // set the pairing status
@@ -118,7 +118,7 @@ void setup() {
             esp_now_send(server.macAddr, (uint8_t *)&pairingData, sizeof(pairingData));
 
             delay(1000);
-        }  // add the server to the peer list
+        }  // add the peerInfo to the peer list
 
     }
     pairingData.id = 2;

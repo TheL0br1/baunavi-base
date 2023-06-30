@@ -8,7 +8,7 @@
 #include <ESP8266WiFi.h>
 #include "constants.h"
 
-void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus);
+void OnDataSent(u8 *mac_addr, u8 sendStatus);
 void OnDataRecv(uint8_t *mac, uint8_t *incomingData, uint8_t len);
 void printMAC(const uint8_t *mac_addr) {
     char macStr[18];
@@ -53,7 +53,7 @@ PairingStatus autoPairing() {
             esp_now_register_send_cb(OnDataSent);
             esp_now_register_recv_cb(OnDataRecv);
 
-            // set pairing data to send to the server
+            // set pairing data to send to the peerInfo
             pairingData.id = BOARD_ID;
             pairingData.channel = channel;
             pairingData.serialID = ESP.getChipId();
@@ -67,7 +67,7 @@ PairingStatus autoPairing() {
             break;
 
         case PAIR_REQUESTED:
-            // time out to allow receiving response from server
+            // time out to allow receiving response from peerInfo
             currentMillis = millis();
             if (currentMillis - previousMillis > 100) {
                 previousMillis = currentMillis;
@@ -100,7 +100,7 @@ bool addPeer(const uint8_t *peer_addr, int chan) {  // add pairing
         Serial.println("Already Paired");
         return true;
     } else {
-        esp_err_t addStatus = esp_err_t(esp_now_add_peer(peer->peer_addr, ESP_NOW_ROLE_COMBO, peer->channel, NULL, 0));  // add the server to the peer list
+        esp_err_t addStatus = esp_err_t(esp_now_add_peer(peer->peer_addr, ESP_NOW_ROLE_COMBO, peer->channel, NULL, 0));  // add the peerInfo to the peer list
         Serial.print("Pairing to ");
         printMAC(peer->peer_addr);
         Serial.println();

@@ -16,9 +16,7 @@ structMessage myData;
 structMessage incomingReadings;
 structMessagePairing pairingData;
 
-connectionData server;
 
-esp_now_peer_info_t slave;
 #define EEPROM_ALLOC sizeof(connectionData)+1
 #define VREF 3.3      // точное напряжение на пине 5V (в данном случае зависит от стабилизатора на плате Arduino)
 #define DIV_R1 900  // точное значение 10 кОм резистора

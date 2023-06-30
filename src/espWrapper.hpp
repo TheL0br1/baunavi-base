@@ -18,6 +18,7 @@ public:
     uint32_t serialId;
     esp_now_peer_info_t peerInfo;
     std::string WifiName = NULL;
+    unsigned long previousMillis;
     uint8_t broadcastAddressX[6]={ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
     double charge;
     long messageSended;
@@ -26,10 +27,9 @@ public:
     static espWrapper *espWrapper_;
     void printMAC();
     double getCharge();
-    bool addPear();
+    bool addPear(const uint8_t *peer_addr, int chan);
+    void printMAC(const int *mac_addr);
     PairingStatus autoPairing();
-    static void OnDataSent(int *mac_addr, int sendStatus);
-    static void OnDataRecv(int *mac, int *incomingData, int len);
     espWrapper* getInstance();
 
 private:

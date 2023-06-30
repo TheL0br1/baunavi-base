@@ -52,7 +52,7 @@ typedef struct structMessagePairing {
     uint8_t channel;
     uint32_t serialID;
     bool initWifi;
-}
+};
 typedef struct connectionData{
     uint8_t macAddr[6] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
     uint8_t channel;
