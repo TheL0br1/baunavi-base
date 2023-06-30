@@ -147,9 +147,7 @@ void loop() {
     delay(10);
     //Set values to send
     myData.msgType = DATA;
-    myData.id = 2;
     myData.charge = getCharge();
-    myData.readingId = readingId++;
 
     // Send message via ESP-NOW to all peers
     int res = esp_now_send(server.macAddr, (uint8_t *)&myData, sizeof(myData));

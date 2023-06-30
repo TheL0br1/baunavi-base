@@ -27,9 +27,6 @@ void printIncomingReadings() {
     Serial.print("Led: ");
     Serial.print(incomingReadingsId);
 }
-float getCharge(){
-    return (analogRead(A0) / 1023.0) * VREF * ((DIV_R1 + DIV_R2) / DIV_R2);
-}
 
 PairingStatus autoPairing() {
     switch (pairingStatus) {

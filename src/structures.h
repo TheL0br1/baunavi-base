@@ -33,25 +33,30 @@ enum MessageType { PAIRING,
     DATA,
     SET_INIT,
 };
-typedef struct struct_message {
+enum PairingStatus { PAIR_REQUEST,
+    PAIR_REQUESTED,
+    PAIR_PAIRED,
+};
+typedef struct structMessage {
     MessageType msgType;
-    uint8_t id;
     float charge;
-    int readingId;
-} struct_message;
+    char WiFiName[];
 
-typedef struct struct_pairing {  // new structure for pairing
+
+};
+
+typedef struct structMessagePairing {
     MessageType msgType;
     uint8_t id;
     uint8_t macAddr[6];
     uint8_t channel;
     uint32_t serialID;
     bool initWifi;
-} struct_pairing;
+}
 typedef struct connectionData{
     uint8_t macAddr[6] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
     uint8_t channel;
-}connection_data;
+};
 
 typedef struct myData{
     uint8_t macAddr[6];
