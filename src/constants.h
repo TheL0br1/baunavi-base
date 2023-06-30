@@ -8,8 +8,6 @@ int id = 2;
 
 
 unsigned long currentMillis = millis();
-unsigned long lastTime = 0;
-unsigned long timerDelay = 2000;  // send readings timer
 
 uint8_t broadcastAddressX[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
@@ -20,7 +18,6 @@ enum PairingStatus { PAIR_REQUEST,
 PairingStatus pairingStatus = PAIR_REQUEST;
 MessageType messageType;
 
-// Define variables to store DHT readings to be sent
 
 // Define variables to store incoming readings
 float incomingCharge;
@@ -38,11 +35,10 @@ struct_message myData;
 struct_message incomingReadings;
 struct_pairing pairingData;
 
-connection_data server;
+connectionData server;
 
 esp_now_peer_info_t slave;
-#define BOARD_ID 2
-#define EEPROM_ALLOC sizeof(connection_data)+1
+#define EEPROM_ALLOC sizeof(connectionData)+1
 #define VREF 3.3      // точное напряжение на пине 5V (в данном случае зависит от стабилизатора на плате Arduino)
 #define DIV_R1 900  // точное значение 10 кОм резистора
 #define DIV_R2 100

@@ -3,3 +3,5 @@
 //
 
 #include "espWrapper.hpp"
+#include "structures.h"
+

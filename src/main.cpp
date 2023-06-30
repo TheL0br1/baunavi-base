@@ -21,7 +21,6 @@ void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
     Serial.println();
 }
 
-
 // Callback when data is received
 void OnDataRecv(uint8_t *mac, uint8_t *incomingData, uint8_t len) {
     Serial.print("Size of message : ");
@@ -79,7 +78,6 @@ void OnDataRecv(uint8_t *mac, uint8_t *incomingData, uint8_t len) {
     }
 }
 
-
 void setup() {
     // Init Serial Monitor
     Serial.begin(115200);
@@ -112,7 +110,6 @@ void setup() {
     esp_now_register_send_cb(OnDataSent);
     esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
     if (server.macAddr[0] != 0xFF && server.macAddr[0] != 0) {
-        pairingData.id = BOARD_ID;
         pairingData.channel = server.channel;
         Serial.println("PAIRED TO:");
         printMAC(server.macAddr);

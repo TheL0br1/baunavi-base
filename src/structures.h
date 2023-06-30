@@ -48,7 +48,13 @@ typedef struct struct_pairing {  // new structure for pairing
     uint32_t serialID;
     bool initWifi;
 } struct_pairing;
-typedef struct connection_data{
+typedef struct connectionData{
     uint8_t macAddr[6] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
-    uint8_t channel = NULL;
+    uint8_t channel;
 }connection_data;
+
+typedef struct myData{
+    uint8_t macAddr[6];
+    uint8_t channel;
+    uint32_t serialId;
+};
