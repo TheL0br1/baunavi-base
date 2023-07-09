@@ -54,8 +54,9 @@ typedef struct structMessagePairing {
     bool initWifi;
 };
 typedef struct connectionData{
-    uint8_t macAddr[6] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+    const int macAddr[6];
     uint8_t channel;
+    connectionData(): macAddr{0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}, channel(-1){};
 };
 
 typedef struct myData{

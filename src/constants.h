@@ -8,9 +8,7 @@
 
 
 
-// Define variables to store incoming readings
-float incomingCharge;
-int incomingReadingsId;
+
 
 structMessage myData;
 structMessage incomingReadings;
