@@ -7,12 +7,13 @@
 #include <pins_arduino.h>
 #include <core_esp8266_waveform.h>
 #include <EEPROM.h>
+#include <user_interface.h>
+#include <ESP8266WiFi.h>
 #include "espWrapper.hpp"
 #include "structures.h"
-#include "functions.h"
 #include "callBacks.hpp"
+#include "constants.h"
 
-espWrapper espWrapper::*espWrapper_ = nullptr;
 
 espWrapper* espWrapper::getInstance() {
     if(espWrapper_== nullptr){
@@ -44,17 +45,27 @@ espWrapper::espWrapper(){
 
             delay(1000);
         }  // add the peerInfo to the peer list
-
     }
+    esp_now_register_recv_cb(reinterpret_cast<esp_now_recv_cb_t>(OnDataRecv));
+    esp_now_register_send_cb(reinterpret_cast<esp_now_send_cb_t>(OnDataSent));
+    while (pairingStatus != PAIR_PAIRED) {
+        start = millis();
+        autoPairing();
+        delay(100);
+    }
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.softAP("notInit");
+    WiFi.setSleepMode(WIFI_LIGHT_SLEEP);
+
 }
 
 
-bool espWrapper::addPear(const int *peer_addr, int chan) {
+bool espWrapper::addPear() {
     memset(&peerInfo, 0, sizeof(peerInfo));
     esp_now_peer_info_t *peer = &peerInfo;
-    memcpy(peerInfo.peer_addr, peer_addr, sizeof(peerInfo.peer_addr));
+    memcpy(peerInfo.peer_addr, server.macAddr, sizeof(peerInfo.peer_addr));
 
-    peerInfo.channel = chan;  // pick a channel
+    peerInfo.channel = server.channel;  // pick a channel
     peerInfo.encrypt = 0;     // no encryption
     // check if the peer exists
     bool exists = esp_now_is_peer_exist(peerInfo.peer_addr);
@@ -90,63 +101,60 @@ void espWrapper::printMAC() {
     Serial.println(WiFi.macAddress());
 }
 PairingStatus espWrapper::autoPairing() {
+    switch (pairingStatus) {
+        case PAIR_REQUEST:
+            Serial.print("Pairing request on channel ");
+            Serial.println(channel);
 
-        switch (pairingStatus) {
-            case PAIR_REQUEST:
-                Serial.print("Pairing request on channel ");
-                Serial.println(channel);
+            // clean esp now
+            esp_now_deinit();
+            WiFi.mode(WIFI_STA);
+            // set WiFi channel
+            wifi_promiscuous_enable(1);
+            wifi_set_channel(channel);
+            wifi_promiscuous_enable(0);
+            /// WiFi.printDiag(Serial);
+            WiFi.disconnect();
 
-                // clean esp now
-                esp_now_deinit();
-                WiFi.mode(WIFI_STA);
-                // set WiFi channel
-                wifi_promiscuous_enable(1);
-                wifi_set_channel(channel);
-                wifi_promiscuous_enable(0);
-                /// WiFi.printDiag(Serial);
-                WiFi.disconnect();
+            // Init ESP-NOW
+            if (esp_now_init() != 0) {
+                Serial.println("Error initializing ESP-NOW");
+            }
+            esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
+            // set callback routines
+            esp_now_register_send_cb(OnDataSent);
+            esp_now_register_recv_cb(OnDataRecv);
 
-                // Init ESP-NOW
-                if (esp_now_init() != 0) {
-                    Serial.println("Error initializing ESP-NOW");
+            // set pairing data to send to the peerInfo
+            pairingData = structMessagePairing(reinterpret_cast<const int *>(macAddr), serialId, initWifi);
+            previousMillis = millis();
+
+            // add peer and send request
+            Serial.print("Send request to pair: ");
+            Serial.println(esp_now_send(broadcastAddressX, (uint8_t *)&pairingData, sizeof(pairingData)));
+            pairingStatus = PAIR_REQUESTED;
+            break;
+
+        case PAIR_REQUESTED:
+            // time out to allow receiving response from peerInfo
+            currentMillis = millis();
+            if (currentMillis - previousMillis > 100) {
+                previousMillis = currentMillis;
+                // time out expired,  try next channel
+                channel++;
+                if (channel > 13) {
+                    channel = 0;
                 }
-                esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
-                // set callback routines
-                esp_now_register_send_cb(OnDataSent);
-                esp_now_register_recv_cb(OnDataRecv);
+                pairingStatus = PAIR_REQUEST;
+            }
+            break;
 
-                // set pairing data to send to the peerInfo
-                pairingData.channel = channel;
-                pairingData.serialID = ESP.getChipId();
-                pairingData.initWifi = initWifi;
-                previousMillis = millis();
-
-                // add peer and send request
-                Serial.print("Send request to pair: ");
-                Serial.println(esp_now_send(broadcastAddressX, (uint8_t *)&pairingData, sizeof(pairingData)));
-                pairingStatus = PAIR_REQUESTED;
-                break;
-
-            case PAIR_REQUESTED:
-                // time out to allow receiving response from peerInfo
-                currentMillis = millis();
-                if (currentMillis - previousMillis > 100) {
-                    previousMillis = currentMillis;
-                    // time out expired,  try next channel
-                    channel++;
-                    if (channel > 13) {
-                        channel = 0;
-                    }
-                    pairingStatus = PAIR_REQUEST;
-                }
-                break;
-
-            case PAIR_PAIRED:
-                Serial.println("Paired!");
-                break;
-        }
-        return pairingStatus;
+        case PAIR_PAIRED:
+            Serial.println("Paired!");
+            break;
     }
+    return pairingStatus;
+}
 
 void espWrapper::initEEPromData() {
     Serial.begin(115200);
@@ -165,7 +173,8 @@ void espWrapper::initEEPromData() {
     eepromIterator++;
     if(initWifi){
         EEPROM.get(eepromIterator, wifiName);
-        Serial.println("Wifi name:");
+        Serial.print("Wifi name:");
+        Serial.println(wifiName.c_str() );
     }
 }
 

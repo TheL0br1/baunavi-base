@@ -30,33 +30,45 @@ typedef struct {
 
 //structures for messaging
 enum MessageType { PAIRING,
-    DATA,
     SET_INIT,
 };
 enum PairingStatus { PAIR_REQUEST,
     PAIR_REQUESTED,
     PAIR_PAIRED,
 };
+enum EspRole { MAIN,
+    SWITCH,
+    BASE,
+};
 typedef struct structMessage {
     MessageType msgType;
-    float charge;
-    char WiFiName[];
+    char* WiFiName;
+    int size;
 
 
 };
 
 typedef struct structMessagePairing {
     MessageType msgType;
-    uint8_t id;
     uint8_t macAddr[6];
     uint8_t channel;
     uint32_t serialID;
     bool initWifi;
+    structMessagePairing(const int* macAddr_, uint32_t serialID, bool initWifi):
+    msgType(PAIRING), serialID(serialID), initWifi(initWifi){
+        std::memcpy(macAddr, macAddr_, 6);
+    }
 };
 typedef struct connectionData{
-    const int macAddr[6];
+    MessageType msgType;
+    EspRole role;
+    int *macAddr;
     uint8_t channel;
-    connectionData(): macAddr{0xFF,0xFF,0xFF,0xFF,0xFF,0xFF}, channel(-1){};
+    connectionData() :channel(-1) {
+        for (int i = 0; i < 6; ++i) {
+            macAddr[i] = 0xFF;
+        }
+    }
 };
 
 typedef struct myData{

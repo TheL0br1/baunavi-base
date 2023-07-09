@@ -12,28 +12,30 @@
 
 class espWrapper {
 public:
-    uint8_t macAddr[6];
-    uint8_t channel;
-    connectionData server;
-    uint32_t serialId;
-    esp_now_peer_info_t peerInfo;
-    std::string wifiName = NULL;
+    uint8_t macAddr[6]{};
+    uint8_t channel{};
+    long long start;
+    connectionData server = connectionData();
+    uint32_t serialId = EspClass::getChipId();
+    structMessagePairing pairingData = structMessagePairing(nullptr, 0, false);
+    esp_now_peer_info_t peerInfo{};
+    std::string wifiName = nullptr;
     bool initWifi = false;
-    unsigned long previousMillis;
+    unsigned long previousMillis{};
     uint8_t broadcastAddressX[6]={ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-    double charge;
-    long messageSended;
+    double charge{};
+    long messageSended{};
     PairingStatus pairingStatus = PAIR_REQUEST;
     uint16_t eepromIterator = 1;
     static espWrapper *espWrapper_;
     void printMAC();
     double getCharge();
-    bool addPear(const int *peer_addr, int chan);
+    bool addPear();
     void printMAC(const int* mac_addr);
     PairingStatus autoPairing();
     static espWrapper* getInstance();
     void initEEPromData();
-    unsigned long currentMillis;
+    unsigned long currentMillis{};
 
 
 private:

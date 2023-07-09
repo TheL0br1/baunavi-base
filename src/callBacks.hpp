@@ -6,16 +6,17 @@
 #define UNTITLED2_CALLBACKS_HPP
 
 #endif //UNTITLED2_CALLBACKS_HPP
-// Callback when data is sent
-void OnDataSent(int *mac_addr, int sendStatus) {
-    Serial.print("Last Packet Send Status: ");
-    if(sendStatus == ESP_OK){
-        Serial.println("Delivery Success to ");
-        printMAC(mac_addr);
 
-    }else{
+// Callback when data is sent
+void OnDataSent(int *macAddr, int sendStatus) {
+    Serial.print("Last Packet Send Status: ");
+    if (sendStatus == ESP_OK) {
+        Serial.println("Delivery Success to ");
+        espWrapper::espWrapper_->printMAC(macAddr);
+
+    } else {
         Serial.println("Delivery Failed to ");
-        printMAC(mac_addr);
+        espWrapper::espWrapper_->printMAC(macAddr);
         Serial.print("Status:");
         Serial.println(sendStatus);
     }
@@ -27,55 +28,42 @@ void OnDataRecv(int *mac, int *incomingData, int len) {
     Serial.print("Size of message : ");
     Serial.print(len);
     Serial.print(" from ");
-    printMAC(mac);
+    espWrapper::espWrapper_->printMAC(mac);
     Serial.println();
-    uint8_t type = incomingData[0];
+    MessageType type = static_cast<MessageType>(incomingData[0]);
     switch (type) {
-        case DATA:
-            memcpy(&incomingReadings, incomingData, sizeof(incomingReadings));
-            Serial.print(len);
-            Serial.print(" Data bytes received from: ");
-            printMAC(mac);
-            Serial.println();
-            incomingCharge=incomingReadings.charge;
-            printIncomingReadings();
-
-            if (incomingReadings.readingId % 2 == 1) {
-                digitalWrite(LED_BUILTIN, LOW);
-            } else {
-                digitalWrite(LED_BUILTIN, HIGH);
-            }
+        case SET_INIT: {
+            structMessage message = reinterpret_cast<structMessage &&>(incomingData);
+            espWrapper::espWrapper_->wifiName = message.WiFiName;
+            Serial.print("Wifi name seted:");
+            Serial.println(message.WiFiName);
+        }
             break;
+        case PAIRING: {
 
-        case PAIRING:
-            memcpy(&pairingData, incomingData, sizeof(pairingData));
-            if (pairingData.id == 0) {  // the message comes from peerInfo
-
+            memcpy(&espWrapper::espWrapper_->server, incomingData, sizeof(&espWrapper::espWrapper_->server));
+            if (espWrapper::espWrapper_->server.role == MAIN ||
+                espWrapper::espWrapper_->server.role == SWITCH) {  // the message comes from peerInfo
                 Serial.print("Pairing done for ");
-                printMAC(mac);
-                memcpy(&pairingData.macAddr, mac, sizeof(&pairingData.macAddr));
+                espWrapper::espWrapper_->printMAC(mac);
+                memcpy(espWrapper::espWrapper_->server.macAddr, mac, sizeof(&espWrapper::espWrapper_->server.macAddr));
                 Serial.print(" on channel ");
-                Serial.print(pairingData.channel);  // channel used by the peerInfo
+                Serial.print(espWrapper::espWrapper_->server.channel);  // channel used by the peerInfo
                 Serial.print(" in ");
-                Serial.print(millis() - start);
+                Serial.print(millis() - espWrapper::espWrapper_->start);
                 Serial.println("ms");
                 //esp_now_del_peer(pairingData.macAddr);
                 //esp_now_del_peer(mac);
-                memcpy(&server.macAddr, mac, sizeof(server.macAddr));
-                server.channel = pairingData.channel;
-                EEPROM.put(1, server);
+                EEPROM.put(1, espWrapper::espWrapper_->server);
                 EEPROM.commit();
-                addPeer(mac, server.channel);
+                espWrapper::espWrapper_->addPear(espWrapper::espWrapper_->server.channel, 0);
                 // add the peerInfo to the peer list
-                espWrapper.pairingStatus = PAIR_PAIRED;
+                espWrapper::espWrapper_->pairingStatus = PAIR_PAIRED;
                 WiFi.mode(WIFI_AP_STA);
-                WiFi.softAP("rssid_test4");                                                              // set the pairing status
+                WiFi.softAP(
+                        "rssid_test4");                                                              // set the pairing status
             }
             break;
-        case SET_INIT:
-            Serial.println("GET {SET_INIT} DATA");
-
-
+        }
     }
 }
-espWrapper espInstance = *espWrapper::getInstance();
