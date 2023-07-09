@@ -1,6 +1,6 @@
 //for esp8266-32 compatibility
 #include <cstdint>
-
+typedef u8 uint8_t;
 #ifndef ESP32
 typedef enum {
     ESP_OK = 0,                 /*!< No error */
@@ -29,7 +29,7 @@ typedef struct {
 #pragma once
 
 //structures for messaging
-enum MessageType { PAIRING,
+enum MessageType { PAIRING, DATA,
     SET_INIT,
 };
 enum PairingStatus { PAIR_REQUEST,
@@ -42,7 +42,7 @@ enum EspRole { MAIN,
 };
 typedef struct structMessage {
     MessageType msgType;
-    char* WiFiName;
+    char WiFiName[99];
     int size;
 
 
@@ -52,17 +52,18 @@ typedef struct structMessagePairing {
     MessageType msgType;
     uint8_t macAddr[6];
     uint8_t channel;
-    uint32_t serialID;
+    uint32_t serialId;
     bool initWifi;
-    structMessagePairing(const int* macAddr_, uint32_t serialID, bool initWifi):
-    msgType(PAIRING), serialID(serialID), initWifi(initWifi){
-        std::memcpy(macAddr, macAddr_, 6);
+    structMessagePairing(bool initWifi, uint32_t serialId) :
+    msgType(PAIRING),initWifi(initWifi), serialId(serialId){
+        WiFi.macAddress(macAddr);
+        channel = WiFi.channel();
     }
 };
 typedef struct connectionData{
     MessageType msgType;
     EspRole role;
-    int *macAddr;
+    uint8_t *macAddr;
     uint8_t channel;
     connectionData() :channel(-1) {
         for (int i = 0; i < 6; ++i) {
@@ -72,7 +73,13 @@ typedef struct connectionData{
 };
 
 typedef struct myData{
-    uint8_t macAddr[6];
-    uint8_t channel;
+    MessageType type;
+    EspRole role;
     uint32_t serialId;
+    double charge;
+    myData(uint32_t serialId, double charge): type(DATA), serialId(serialId), role(BASE), charge(charge){
+
+    }
+
+
 };

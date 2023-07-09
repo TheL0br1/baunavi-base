@@ -36,15 +36,18 @@ espWrapper::espWrapper(){
     WiFi.softAP(wifiName.c_str());
     Serial.println(WiFi.macAddress());
     if (server.macAddr[0] != 0xFF && server.macAddr[0] != 0) {
-        pairingData.channel = server.channel;
         Serial.println("PAIRED TO:");
-        printMAC(server.macAddr);
-        if(addPear(server.macAddr, server.channel))
+        printMAC(reinterpret_cast<const int *>(server.macAddr));
+        if(addPear())
         {
-            esp_now_send(const_cast<int *>(server.macAddr), reinterpret_cast<int *>((uint8_t *) &pairingData), sizeof(pairingData));
-
+            esp_now_send((server.macAddr),
+                         reinterpret_cast<u8 *>(&pairingData), sizeof(pairingData));
+            pairingStatus = PAIR_PAIRED;
             delay(1000);
         }  // add the peerInfo to the peer list
+    }
+    else{
+        pairingData = structMessagePairing(initWifi, serialId);
     }
     esp_now_register_recv_cb(reinterpret_cast<esp_now_recv_cb_t>(OnDataRecv));
     esp_now_register_send_cb(reinterpret_cast<esp_now_send_cb_t>(OnDataSent));
@@ -78,8 +81,22 @@ bool espWrapper::addPear() {
         Serial.print("Pairing to ");
         printMAC(reinterpret_cast<const int *>(peer->peer_addr));
         Serial.println();
-        Serial.print("Channel: ");
-        Serial.println(peer->channel);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //Serial.println(peer->channel);
         if (addStatus == ESP_OK) {
             // Pair success
             Serial.println("Pair success");
@@ -122,11 +139,11 @@ PairingStatus espWrapper::autoPairing() {
             }
             esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
             // set callback routines
-            esp_now_register_send_cb(OnDataSent);
-            esp_now_register_recv_cb(OnDataRecv);
+            esp_now_register_send_cb(reinterpret_cast<esp_now_send_cb_t>(OnDataSent));
+            esp_now_register_recv_cb(reinterpret_cast<esp_now_recv_cb_t>(OnDataRecv));
 
             // set pairing data to send to the peerInfo
-            pairingData = structMessagePairing(reinterpret_cast<const int *>(macAddr), serialId, initWifi);
+            pairingData = structMessagePairing( initWifi,serialId);
             previousMillis = millis();
 
             // add peer and send request
@@ -177,5 +194,24 @@ void espWrapper::initEEPromData() {
         Serial.println(wifiName.c_str() );
     }
 }
+
+myData espWrapper::prepareDataToSend() {
+    return myData(serialId, getCharge());
+}
+
+double espWrapper::getCharge(){
+    return (analogRead(A0) / 1023.0) * VREF * ((DIV_R1 + DIV_R2) / DIV_R2);
+}
+
+bool espWrapper::setWifi(char *WifiName) {
+    this->wifiName = WifiName;
+    WiFi.softAP(this->wifiName.c_str());
+    initWifi = true;
+    EEPROM.put(eepromIterator, initWifi);
+    eepromIterator+=sizeof(initWifi);
+    EEPROM.put(eepromIterator, wifiName);
+    return true;
+}
+
 
 

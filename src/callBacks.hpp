@@ -13,6 +13,7 @@ void OnDataSent(int *macAddr, int sendStatus) {
     if (sendStatus == ESP_OK) {
         Serial.println("Delivery Success to ");
         espWrapper::espWrapper_->printMAC(macAddr);
+        espWrapper::espWrapper_->messageSended++;
 
     } else {
         Serial.println("Delivery Failed to ");
@@ -56,7 +57,7 @@ void OnDataRecv(int *mac, int *incomingData, int len) {
                 //esp_now_del_peer(mac);
                 EEPROM.put(1, espWrapper::espWrapper_->server);
                 EEPROM.commit();
-                espWrapper::espWrapper_->addPear(espWrapper::espWrapper_->server.channel, 0);
+                espWrapper::espWrapper_->addPear();
                 // add the peerInfo to the peer list
                 espWrapper::espWrapper_->pairingStatus = PAIR_PAIRED;
                 WiFi.mode(WIFI_AP_STA);

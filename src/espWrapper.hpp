@@ -17,7 +17,7 @@ public:
     long long start;
     connectionData server = connectionData();
     uint32_t serialId = EspClass::getChipId();
-    structMessagePairing pairingData = structMessagePairing(nullptr, 0, false);
+    structMessagePairing pairingData = structMessagePairing(false, 0);
     esp_now_peer_info_t peerInfo{};
     std::string wifiName = nullptr;
     bool initWifi = false;
@@ -28,15 +28,16 @@ public:
     PairingStatus pairingStatus = PAIR_REQUEST;
     uint16_t eepromIterator = 1;
     static espWrapper *espWrapper_;
-    void printMAC();
+    static void printMAC();
     double getCharge();
     bool addPear();
-    void printMAC(const int* mac_addr);
+    static void printMAC(const int* mac_addr);
     PairingStatus autoPairing();
     static espWrapper* getInstance();
     void initEEPromData();
     unsigned long currentMillis{};
-
+    bool setWifi(char* WifiName);
+    myData prepareDataToSend();
 
 private:
     espWrapper();

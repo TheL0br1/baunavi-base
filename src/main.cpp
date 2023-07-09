@@ -1,3 +1,4 @@
+#include<Arduino.h>
 #include <ESP8266WiFi.h>
 #include <espnow.h>
 #include <EEPROM.h>
@@ -26,12 +27,12 @@ void loop() {
     WiFi.softAP(pEspWrapper->wifiName.c_str());
     delay(10);
     //Set values to send
-    myData.msgType = DATA;
-    myData.charge = getCharge();
+
 
     // Send message via ESP-NOW to all peers
-    int res = esp_now_send(server.macAddr, (uint8_t *)&myData, sizeof(myData));
-    printMAC(server.macAddr);
+    myData dataToSend = pEspWrapper->prepareDataToSend();
+    int res = esp_now_send(pEspWrapper->server.macAddr, reinterpret_cast<u8 *>(&dataToSend), sizeof(dataToSend));
+    espWrapper::printMAC(reinterpret_cast<const int *>(pEspWrapper->server.macAddr));
     Serial.print(res);
 
 }
