@@ -65,7 +65,8 @@ typedef struct connectionData{
     EspRole role;
     uint8_t *macAddr;
     uint8_t channel;
-    connectionData() :channel(-1) {
+    connectionData() :channel(1), role(BASE), msgType(DATA) {
+        macAddr = new uint8_t[6]; // Выделение памяти для массива macAddr
         for (int i = 0; i < 6; ++i) {
             macAddr[i] = 0xFF;
         }

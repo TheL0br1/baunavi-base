@@ -1,4 +1,3 @@
-//
 // Created by User on 6/30/2023.
 //
 
@@ -13,17 +12,14 @@
 #include "structures.h"
 #include "callBacks.hpp"
 #include "constants.h"
-
-
-espWrapper* espWrapper::getInstance() {
-    if(espWrapper_== nullptr){
-        espWrapper_ = new espWrapper();
-    }
-    return espWrapper_;
-
-}
+espWrapper* espWrapper::espWrapper_;
 
 espWrapper::espWrapper(){
+    Serial.println("start constructor2");
+    WiFi.mode(WIFI_AP_STA);
+    WiFi.softAP("none");
+    Serial.println(WiFi.macAddress());
+
     if (esp_now_init() != 0) {
         Serial.println("Error initializing ESP-NOW");
         Serial.println(esp_now_init());
@@ -49,8 +45,7 @@ espWrapper::espWrapper(){
     else{
         pairingData = structMessagePairing(initWifi, serialId);
     }
-    esp_now_register_recv_cb(reinterpret_cast<esp_now_recv_cb_t>(OnDataRecv));
-    esp_now_register_send_cb(reinterpret_cast<esp_now_send_cb_t>(OnDataSent));
+
     while (pairingStatus != PAIR_PAIRED) {
         start = millis();
         autoPairing();
@@ -61,6 +56,23 @@ espWrapper::espWrapper(){
     WiFi.setSleepMode(WIFI_LIGHT_SLEEP);
 
 }
+
+ espWrapper* espWrapper::getInstance() {
+    Serial.println("start constructor");
+    if(espWrapper_== nullptr){
+        Serial.println("start constructor2");
+        Serial.print("size of class: ");
+        Serial.println(sizeof(espWrapper));
+        espWrapper_ = new espWrapper();
+
+        Serial.println("end constructor2");
+
+    }
+    Serial.println("end constructor");
+     return espWrapper_;
+
+
+ }
 
 
 bool espWrapper::addPear() {
@@ -77,24 +89,10 @@ bool espWrapper::addPear() {
         Serial.println("Already Paired");
         return true;
     } else {
-        esp_err_t addStatus = esp_err_t(esp_now_add_peer(peer->peer_addr, ESP_NOW_ROLE_COMBO, peer->channel, NULL, 0));  // add the peerInfo to the peer list
+        auto addStatus = esp_err_t(esp_now_add_peer(peer->peer_addr, ESP_NOW_ROLE_COMBO, peer->channel, nullptr, 0));  // add the peerInfo to the peer list
         Serial.print("Pairing to ");
         printMAC(reinterpret_cast<const int *>(peer->peer_addr));
         Serial.println();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         //Serial.println(peer->channel);
         if (addStatus == ESP_OK) {
@@ -108,12 +106,19 @@ bool espWrapper::addPear() {
     }
 }
 void espWrapper::printMAC(const int* mac_addr) {
-    char macStr[18];
-    snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
-             mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
-    Serial.print(macStr);
+    for (int i = 0; i < 6; ++i) {
+        // Use the 'printf' function to format and print each byte
+        printf("%02X", mac_addr[i]);
+
+        // Print a colon (':') separator between each byte, except for the last byte
+        if (i < 5) {
+            Serial.print(":");
+        }
+    }
+
     Serial.println();
 }
+
 void espWrapper::printMAC() {
     Serial.println(WiFi.macAddress());
 }
@@ -196,7 +201,7 @@ void espWrapper::initEEPromData() {
 }
 
 myData espWrapper::prepareDataToSend() {
-    return myData(serialId, getCharge());
+    return {serialId, getCharge()};
 }
 
 double espWrapper::getCharge(){
