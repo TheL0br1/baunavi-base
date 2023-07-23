@@ -5,19 +5,20 @@
 #ifndef UNTITLED2_CALLBACKS_HPP
 #define UNTITLED2_CALLBACKS_HPP
 
-#endif //UNTITLED2_CALLBACKS_HPP
-
 // Callback when data is sent
-void OnDataSent(int *macAddr, int sendStatus) {
+void OnDataSent(uint8_t *macAddr, uint8_t sendStatus) {
+    espWrapper *pEspWrapper = espWrapper::getInstance();
+
     Serial.print("Last Packet Send Status: ");
     if (sendStatus == ESP_OK) {
         Serial.println("Delivery Success to ");
-       // espWrapper::printMAC(reinterpret_cast<const int *>(macAddr));
+        // espWrapper::printMAC(reinterpret_cast<const int *>(macAddr));
 
+        pEspWrapper->messageSended++;
 
     } else {
         Serial.println("Delivery Failed to ");
-        espWrapper::printMAC(macAddr);
+        espWrapper::espWrapper_->printMAC(macAddr);
         Serial.print("Status:");
         Serial.println(sendStatus);
     }
@@ -26,31 +27,34 @@ void OnDataSent(int *macAddr, int sendStatus) {
 }
 
 // Callback when data is received
-void OnDataRecv(int *mac, int *incomingData, int len) {
+void OnDataRecv(uint8_t *mac, uint8_t *incomingData, int len) {
+    espWrapper *pEspWrapper = espWrapper::getInstance();
     Serial.print("Size of message : ");
     Serial.print(len);
     Serial.print(" from ");
     espWrapper::printMAC(mac);
     Serial.println();
+    messagePairing recievedPairing = messagePairing("none", 0, MAIN);
     auto type = static_cast<MessageType>(incomingData[0]);
     switch (type) {
         case SET_INIT: {
             structMessage message = reinterpret_cast<structMessage &&>(incomingData);
-            espWrapper::espWrapper_->wifiName = message.WiFiName;
+            memcpy(espWrapper::espWrapper_->macAddr, message.WiFiName, sizeof(message.WiFiName));
             Serial.print("Wifi name seted:");
             Serial.println(message.WiFiName);
         }
         case PAIRING: {
 
-            memcpy(&espWrapper::espWrapper_->server, incomingData, sizeof(espWrapper::espWrapper_->server));
-            if (espWrapper::espWrapper_->server.role == MAIN ||
-                espWrapper::espWrapper_->server.role == SWITCH) {  // the message comes from peerInfo
+            memcpy(&recievedPairing, incomingData, sizeof(espWrapper::espWrapper_->server));
+            if (recievedPairing.role == MAIN ||
+                recievedPairing.role == SWITCH) {  // the message comes from peerInfo
                 Serial.print("Pairing done for ");
-                espWrapper::printMAC(mac);
-                memcpy(espWrapper::espWrapper_->server.macAddr, mac,
-                       sizeof(&espWrapper::espWrapper_->server.macAddr));
+                espWrapper::espWrapper_->server = connectionData(recievedPairing.channel, recievedPairing.macAddr,
+                                                                 recievedPairing.role);
+                espWrapper::printMAC(recievedPairing.macAddr);
+
                 Serial.print(" on channel ");
-                Serial.print(espWrapper::espWrapper_->server.channel);  // channel used by the peerInfo
+                Serial.print(recievedPairing.channel);  // channel used by the peerInfo
                 Serial.print(" in ");
                 Serial.print(millis() - espWrapper::espWrapper_->start);
                 Serial.println("ms");
@@ -60,12 +64,17 @@ void OnDataRecv(int *mac, int *incomingData, int len) {
                 EEPROM.commit();
                 espWrapper::espWrapper_->addPear();
                 // add the peerInfo to the peer list
-                espWrapper::espWrapper_->pairingStatus = PAIR_PAIRED;
+                pEspWrapper->setPairingStatus(PAIR_PAIRED);
                 WiFi.mode(WIFI_AP_STA);
                 WiFi.softAP(
-                        "rssid_test4");                                                              // set the pairing status
+                        espWrapper::espWrapper_->wifiName);
+                Serial.println("set wifi, end pairing");
             }
 
         }
     }
 }
+
+#endif //UNTITLED2_CALLBACKS_HPP
+
+// Callback when data is sent

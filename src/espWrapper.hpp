@@ -15,11 +15,11 @@ public:
     uint8_t macAddr[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     uint8_t channel=1;
     long long start;
-    connectionData server = connectionData();
+    connectionData server;
     uint32_t serialId = 0;
-    structMessagePairing pairingData = structMessagePairing(false, 0);
+    messagePairing pairingData = messagePairing("null2\0", 0, SWITCH);
     esp_now_peer_info_t peerInfo{};
-    std::string wifiName="null";
+    char wifiName[99]="null2\0";
     bool initWifi = false;
     unsigned long previousMillis{};
     uint8_t broadcastAddressX[6]={ 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
@@ -31,13 +31,15 @@ public:
     static void printMAC();
     double getCharge();
     bool addPear();
-    static void printMAC(const int* mac_addr);
+    static void printMAC(const uint8_t *mac_addr);
     PairingStatus autoPairing();
     static espWrapper* getInstance();
     void initEEPromData();
     unsigned long currentMillis{};
     bool setWifi(char* WifiName);
     myData prepareDataToSend();
+
+    void setPairingStatus(PairingStatus pairingStatus);
 
 private:
     espWrapper();
