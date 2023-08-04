@@ -40,7 +40,7 @@ void loop() {
     myData dataToSend = pEspWrapper->prepareDataToSend();
     Serial.println("Serial id: " + String(ESP.getChipId()));
     dataToSend.print();
-    int res = esp_now_send(pEspWrapper->server.macAddr, reinterpret_cast<u8 *>(&dataToSend), sizeof(dataToSend));
+    int res = esp_now_send(pEspWrapper->server.macAddr, (uint8_t*)(&dataToSend), sizeof(dataToSend));
     espWrapper::printMAC((pEspWrapper->server.macAddr));
     Serial.print(res);
 

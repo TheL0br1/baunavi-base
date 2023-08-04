@@ -38,10 +38,10 @@ void OnDataRecv(uint8_t *mac, uint8_t *incomingData, int len) {
     auto type = static_cast<MessageType>(incomingData[0]);
     switch (type) {
         case SET_INIT: {
-            structMessage message = reinterpret_cast<structMessage &&>(incomingData);
-            memcpy(espWrapper::espWrapper_->macAddr, message.WiFiName, sizeof(message.WiFiName));
-            Serial.print("Wifi name seted:");
-            Serial.println(message.WiFiName);
+           // structMessage message = reinterpret_cast<structMessage &&>(incomingData);
+            //memcpy(espWrapper::espWrapper_->macAddr, message.WiFiName, sizeof(message.WiFiName));
+          //  Serial.print("Wifi name seted:");
+        //    Serial.println(message.WiFiName);
         }
         case PAIRING: {
 

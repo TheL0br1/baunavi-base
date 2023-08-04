@@ -17,7 +17,7 @@ public:
     long long start;
     connectionData server;
     uint32_t serialId = 0;
-    messagePairing pairingData = messagePairing("null2\0", 0, SWITCH);
+    messagePairing pairingData = messagePairing("null2", 0, SWITCH);
     esp_now_peer_info_t peerInfo{};
     char wifiName[99]="null2\0";
     bool initWifi = false;

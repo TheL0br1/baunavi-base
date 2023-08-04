@@ -1,3 +1,5 @@
+
+//structures for pairing
 //for esp8266-32 compatibility
 #include <cstdint>
 #include<list>
@@ -40,12 +42,6 @@ enum EspRole { MAIN,
     SWITCH,
     BASE,
 };
-struct structMessage {
-    MessageType msgType;
-    char WiFiName[99];
-
-
-}  __attribute__((packed));
 
 struct messagePairing {
     MessageType msgType;
@@ -53,60 +49,69 @@ struct messagePairing {
     uint8_t channel;
     EspRole role;
     uint32_t serialId;
-    char WiFiName[99];
+    char WiFiName[51];
     messagePairing(char* WifiName, uint32_t serialId, EspRole role) :
             msgType(PAIRING),serialId(serialId), role(role){
-        Serial.println("messagePairing constructor" );
+        Serial.println("messagePairing constructor start" );
         WiFi.macAddress(macAddr);
         channel = WiFi.channel();
-        memcpy(this->WiFiName, WifiName, sizeof(char)*99);
+        strcpy(this->WiFiName, WifiName);
+        Serial.println("messagePairing constructor end" );
     }
+    messagePairing(messagePairing &message){
+        Serial.println("messagePairing copy constructor start" );
+        msgType = message.msgType;
+        memcpy_P(macAddr, message.macAddr, sizeof(uint8_t)*6);
+        channel = message.channel;
+        role = message.role;
+        serialId = message.serialId;
+        strcpy(WiFiName, message.WiFiName);
+        Serial.println("messagePairing copy constructor end" );
+    }
+};
+
+
+struct structMessage {
+    MessageType msgType;
+    char WiFiName[99];
 }  __attribute__((packed));
+
+
 struct connectionData{
     EspRole role;
-    uint8_t macAddr[6];
+    uint8_t *macAddr;
+    uint32_t serialId;
     uint8_t channel;
     connectionData() :channel(1), role(MAIN) {
+        macAddr = new uint8_t[6]; // Выделение памяти для массива macAddr
         for (int i = 0; i < 6; ++i) {
             macAddr[i] = 0xFF;
         }
     }
-    connectionData(uint8_t channel, uint8_t* macAddr, EspRole role):
-            channel(channel), role(role){
-        memcpy(this->macAddr, macAddr, sizeof(uint8_t)*6);
-        Serial.println("connectionData constructor, mac addr: ");
-        for (int i = 0; i < 6; ++i) {
-            Serial.print(this->macAddr[i], HEX);
-            Serial.print(":");
-        }
+    connectionData(uint8_t channel, uint8_t* macAddr, EspRole role, uint32_t serialId) : serialId(serialId),
+                                                                                         channel(channel), role(role){
+        this->macAddr = new uint8_t[6]; // Выделение памяти для массива macAddr
+        memcpy_P(this->macAddr, macAddr, sizeof(uint8_t)*6);
     }
     connectionData(messagePairing data) {
-        memcpy(this->macAddr, data.macAddr, sizeof(uint8_t)*6);
+        this->macAddr = new uint8_t[6]; // Выделение памяти для массива macAddr
+        memcpy_P(this->macAddr, data.macAddr, sizeof(uint8_t)*6);
         this->channel = data.channel;
         this->role = data.role;
-    }
-    void print(){
-        Serial.print("Role: ");
-        Serial.println(this->role);
-        Serial.print("Channel: ");
-        Serial.println(this->channel);
-        Serial.print("Mac address: ");
-        for (int i = 0; i < 6; ++i) {
-            Serial.print(this->macAddr[i], HEX);
-            Serial.print(":");
-        }
-        Serial.println();
+        this->serialId = data.serialId;
     }
 
-} __attribute__((packed));
+};
 
 struct myData{
     MessageType type;
     EspRole role;
     uint32_t serialId;
-    double charge;
-    myData(double charge): type(DATA), serialId(ESP.getChipId()), role(BASE), charge(charge){
-
+    float charge;
+    char wifiName[51];
+    myData(uint32_t serialId, double charge, char * wifiName): type(DATA), serialId(serialId), role(MAIN), charge(charge){
+        Serial.println("myData constructor");
+        strcpy(this->wifiName, wifiName);
     }
     void print(){
         Serial.print("MessageType: ");
@@ -117,5 +122,38 @@ struct myData{
         Serial.println(this->serialId);
         Serial.print("Charge: ");
         Serial.println(this->charge);
+        Serial.print("Wifi name: ");
+        Serial.println(this->wifiName);
+    }
+} __attribute__((packed));
+struct EspData{
+    EspData(myData data) {
+        this->role = data.role;
+        this->serialId = data.serialId;
+        this->charge = data.charge;
+    }
+
+    EspRole role;
+    uint32_t serialId;
+    double charge;
+    char WifiName[51];
+    EspData(messagePairing msgPairing): role(msgPairing.role), serialId(msgPairing.serialId), charge(-1){
+        strcpy(this->WifiName, msgPairing.WiFiName);
+    }
+
+} __attribute__((packed));
+
+
+struct fireBaseData{
+
+
+    std::list<EspData> espData;
+    int floor;
+    fireBaseData(int floor, std::list<EspData> espData): floor(floor), espData(espData){
+
+    }
+    fireBaseData() {
+        this->espData = std::list<EspData>();
+        this->floor = 0;
     }
 } __attribute__((packed));
