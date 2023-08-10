@@ -26,12 +26,12 @@ void setup() {
 
 void loop() {
     WiFi.forceSleepBegin();
-    WiFi.softAP(pEspWrapper->wifiName);
+    WiFi.softAP(std::to_string(ESP.getChipId()).c_str());
 
     delay(10000);
     WiFi.forceSleepWake();
     delay(1);
-    WiFi.softAP(pEspWrapper->wifiName);
+    WiFi.softAP(std::to_string(ESP.getChipId()).c_str());
     delay(10);
     //Set values to send
 

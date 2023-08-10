@@ -34,15 +34,9 @@ void OnDataRecv(uint8_t *mac, uint8_t *incomingData, int len) {
     Serial.print(" from ");
     espWrapper::printMAC(mac);
     Serial.println();
-    messagePairing recievedPairing = messagePairing("none", 0, MAIN);
+    messagePairing recievedPairing = messagePairing(0, BASE);
     auto type = static_cast<MessageType>(incomingData[0]);
     switch (type) {
-        case SET_INIT: {
-           // structMessage message = reinterpret_cast<structMessage &&>(incomingData);
-            //memcpy(espWrapper::espWrapper_->macAddr, message.WiFiName, sizeof(message.WiFiName));
-          //  Serial.print("Wifi name seted:");
-        //    Serial.println(message.WiFiName);
-        }
         case PAIRING: {
 
             memcpy(&recievedPairing, incomingData, sizeof(espWrapper::espWrapper_->server));
@@ -50,7 +44,7 @@ void OnDataRecv(uint8_t *mac, uint8_t *incomingData, int len) {
                 recievedPairing.role == SWITCH) {  // the message comes from peerInfo
                 Serial.print("Pairing done for ");
                 espWrapper::espWrapper_->server = connectionData(recievedPairing.channel, recievedPairing.macAddr,
-                                                                 recievedPairing.role);
+                                                                 recievedPairing.role, recievedPairing.serialId);
                 espWrapper::printMAC(recievedPairing.macAddr);
 
                 Serial.print(" on channel ");
@@ -67,7 +61,7 @@ void OnDataRecv(uint8_t *mac, uint8_t *incomingData, int len) {
                 pEspWrapper->setPairingStatus(PAIR_PAIRED);
                 WiFi.mode(WIFI_AP_STA);
                 WiFi.softAP(
-                        espWrapper::espWrapper_->wifiName);
+                        std::to_string(ESP.getChipId()).c_str());
                 Serial.println("set wifi, end pairing");
             }
 

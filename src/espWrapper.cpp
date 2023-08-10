@@ -26,7 +26,7 @@ espWrapper::espWrapper(){
     esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
     this->initEEPromData();
     WiFi.mode(WIFI_AP_STA);
-    WiFi.softAP(wifiName);
+    WiFi.softAP(std::to_string(ESP.getChipId()).c_str());
     Serial.println(WiFi.macAddress());
     esp_now_register_recv_cb(reinterpret_cast<esp_now_recv_cb_t>(OnDataRecv));
     esp_now_register_send_cb(reinterpret_cast<esp_now_send_cb_t>(OnDataSent));
@@ -41,7 +41,7 @@ espWrapper::espWrapper(){
         }  // add the peerInfo to the peer list
     }
     else{
-        pairingData = messagePairing(wifiName, serialId, SWITCH);
+        pairingData = messagePairing(serialId, SWITCH);
     }
 
 
@@ -130,7 +130,7 @@ PairingStatus espWrapper::autoPairing() {
             esp_now_register_recv_cb(reinterpret_cast<esp_now_recv_cb_t>(OnDataRecv));
             Serial.println("trying to pair");
             // set pairing data to send to the peerInfo
-            pairingData = messagePairing( wifiName,serialId, SWITCH);
+            pairingData = messagePairing(serialId, SWITCH);
             previousMillis = millis();
 
             // add peer and send request
@@ -176,33 +176,18 @@ void espWrapper::initEEPromData() {
         Serial.println("Server data:");
         server.print();
         eepromIterator += sizeof(decltype(server));
-        EEPROM.get(eepromIterator, initWifi);
-        eepromIterator++;
-        if (initWifi) {
-            EEPROM.get(eepromIterator, wifiName);
-            Serial.print("Wifi name:");
-            Serial.println(wifiName);
-        }
+
     }
 }
 
 myData espWrapper::prepareDataToSend() {
-    return {getCharge()};
+    return {ESP.getChipId(), getCharge(), BASE};
 }
 
 double espWrapper::getCharge(){
     return (analogRead(A0) / 1023.0) * VREF * ((DIV_R1 + DIV_R2) / DIV_R2);
 }
 
-bool espWrapper::setWifi(char *WifiName) {
-    memcpy(wifiName, WifiName, sizeof(wifiName));
-    WiFi.softAP(this->wifiName);
-    initWifi = true;
-    EEPROM.put(eepromIterator, initWifi);
-    eepromIterator+=sizeof(initWifi);
-    EEPROM.put(eepromIterator, wifiName);
-    return true;
-}
 
 void espWrapper::setPairingStatus(PairingStatus pairingStatus) {
     espWrapper::pairingStatus = pairingStatus;
